@@ -186,7 +186,7 @@
 
 (defun js-vector-initializer (vector)
   (let ((size (length vector)))
-    (js-format "[")
+    (js-format "{ \"type\": \"ArrayExpression\", \"elements\": [")
     (dotimes (i (1- size))
       (let ((elt (aref vector i)))
         (unless (eq elt 'null)
@@ -194,7 +194,7 @@
         (js-format ",")))
     (when (plusp size)
       (js-expr (aref vector (1- size)) no-comma))
-    (js-format "]")))
+    (js-format "]}")))
 
 (defun js-object-initializer (plist &optional wrap-p)
   (when wrap-p
