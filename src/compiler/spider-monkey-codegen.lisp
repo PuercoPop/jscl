@@ -138,6 +138,9 @@
 (defun sp-literal (literal)
   (js-format "{ \"type\": \"Literal\", \"value\": ~A }" literal))
 
+(defun sp-string (string)
+  (sp-literal (js-escape-string string)))
+
 (defun unary-minus (number)
   (js-format "{\"type\": \"ExpressionStatement\", \"expression\": { \"type\": \"UnaryExpression\", \"operator\": \"-\", \"argument\": { \"type\": \"Literal\", \"value\": ~A, \"raw\": \"~A\" }, \"prefix\": true }}" number number))
 
@@ -148,7 +151,7 @@
          (sp-literal form)
          (unary-minus (abs form))))
     ((stringp form)
-     (js-format "~a" (js-escape-string form)))
+     (sp-string form))
     ((symbolp form)
      (case form
        (true      (js-format "true"))
