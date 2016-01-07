@@ -1,6 +1,7 @@
-;;; compiler-codege.lisp --- Naive Javascript unparser
+;;; spider-monkey-codegen.lisp --- Generate an JSON AST Representation
 
 ;; Copyright (C) 2013, 2014 David Vazquez
+;; Copyright (C) 2015 Javier Olaechea
 
 ;; JSCL is free software: you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
@@ -134,12 +135,15 @@
       (error "~S is not a valid Javascript identifier." string))
     (js-format "~a" string)))
 
+(defun unary-minus (number)
+  (js-format "{\"type\": \"ExpressionStatement\", \"expression\": { \"type\": \"UnaryExpression\", \"operator\": \"-\", \"argument\": { \"type\": \"Literal\", \"value\": ~A, \"raw\": \"~A\" }, \"prefix\": true }}" number number))
+
 (defun js-primary-expr (form)
   (cond
     ((numberp form)
      (if (<= 0 form)
          (js-format "~a" form)
-         (js-expr `(- ,(abs form)))))
+         (unary-minus (abs form))))
     ((stringp form)
      (js-format "~a" (js-escape-string form)))
     ((symbolp form)
