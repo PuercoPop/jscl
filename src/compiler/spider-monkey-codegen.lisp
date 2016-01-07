@@ -151,6 +151,9 @@
   (js-format "{ \"type\": \"UnaryExpression\", \"operator\": \"-\", \"argument\": ~A, \"prefix\": true }" (with-js-output-to-string
                                                                                                             (sp-literal number))))
 
+(defun sp-this-expression ()
+  (js-format "{ \"type\": \"ThisExpression\" }"))
+
 (defun js-primary-expr (form)
   (cond
     ((numberp form)
@@ -161,11 +164,11 @@
      (sp-string form))
     ((symbolp form)
      (case form
-       (true      (js-format "true"))
-       (false     (js-format "false"))
-       (null      (js-format "null"))
-       (this      (js-format "this"))
-       (undefined (js-format "undefined"))
+       (true      (sp-literal "true"))
+       (false     (sp-literal "false"))
+       (null      (sp-literal "null"))
+       (this      (sp-this-expression))
+       ;; undefined is included in the identifier case
        (otherwise
         (js-identifier form))))
     (t
