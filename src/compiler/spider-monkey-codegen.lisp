@@ -135,6 +135,9 @@
       (error "~S is not a valid Javascript identifier." string))
     (js-format "~a" string)))
 
+(defun sp-literal (literal)
+  (js-format "{ \"type\": \"Literal\", \"value\": ~A }" literal))
+
 (defun unary-minus (number)
   (js-format "{\"type\": \"ExpressionStatement\", \"expression\": { \"type\": \"UnaryExpression\", \"operator\": \"-\", \"argument\": { \"type\": \"Literal\", \"value\": ~A, \"raw\": \"~A\" }, \"prefix\": true }}" number number))
 
@@ -142,7 +145,7 @@
   (cond
     ((numberp form)
      (if (<= 0 form)
-         (js-format "~a" form)
+         (sp-literal form)
          (unary-minus (abs form))))
     ((stringp form)
      (js-format "~a" (js-escape-string form)))
