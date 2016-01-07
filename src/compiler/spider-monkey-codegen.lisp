@@ -135,6 +135,12 @@
       (error "~S is not a valid Javascript identifier." string))
     (js-format "~a" string)))
 
+(defmacro with-js-output-to-string (&body body)
+  (let ((g!out (gensym)))
+    `(with-output-to-string (,g!out)
+       (let ((*js-output* ,g!out))
+         ,@body))))
+
 (defun sp-literal (literal)
   (js-format "{ \"type\": \"Literal\", \"value\": ~A }" literal))
 
@@ -142,7 +148,8 @@
   (sp-literal (js-escape-string string)))
 
 (defun unary-minus (number)
-  (js-format "{\"type\": \"ExpressionStatement\", \"expression\": { \"type\": \"UnaryExpression\", \"operator\": \"-\", \"argument\": { \"type\": \"Literal\", \"value\": ~A, \"raw\": \"~A\" }, \"prefix\": true }}" number number))
+  (js-format "{ \"type\": \"UnaryExpression\", \"operator\": \"-\", \"argument\": ~A, \"prefix\": true }" (with-js-output-to-string
+                                                                                                            (sp-literal number))))
 
 (defun js-primary-expr (form)
   (cond
