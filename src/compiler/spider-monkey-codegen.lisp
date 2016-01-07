@@ -122,18 +122,8 @@
           (values string t)
           (values nil nil)))))
 
-
-;;; Expression generators
+;;; Spider Monkey JSON AST emitters
 ;;;
-;;; `js-expr' and the following auxiliary functions are the
-;;; responsible for generating Javascript expression.
-
-(defun js-identifier (string-designator)
-  (multiple-value-bind (string valid)
-      (valid-js-identifier string-designator)
-    (unless valid
-      (error "~S is not a valid Javascript identifier." string))
-    (js-format "~a" string)))
 
 (defmacro with-js-output-to-string (&body body)
   (let ((g!out (gensym)))
@@ -147,19 +137,39 @@
 (defun sp-string (string)
   (sp-literal (js-escape-string string)))
 
-(defun unary-minus (number)
-  (js-format "{ \"type\": \"UnaryExpression\", \"operator\": \"-\", \"argument\": ~A, \"prefix\": true }" (with-js-output-to-string
-                                                                                                            (sp-literal number))))
+(defun sp-unary-minus (number)
+  (js-format "{ \"type\": \"UnaryExpression\", \"operator\": \"-\", \"argument\": ~A, \"prefix\": true }"
+             (with-js-output-to-string
+               (sp-literal number))))
 
 (defun sp-this-expression ()
   (js-format "{ \"type\": \"ThisExpression\" }"))
+
+(defun sp-identifier (identifier-name)
+  (let ((name (etypecase identifier-name
+                (symbol (string-downcase (symbol-name identifier-name)))
+                (string identifier-name))))
+    (js-format "{ \"type\": \"Identifier\", \"name\": \"~A\"}" name)))
+
+
+;;; Expression generators
+;;;
+;;; `js-expr' and the following auxiliary functions are the
+;;; responsible for generating Javascript expression.
+
+(defun js-identifier (string-designator)
+  (multiple-value-bind (string valid)
+      (valid-js-identifier string-designator)
+    (unless valid
+      (error "~S is not a valid Javascript identifier." string))
+    (sp-identifier string)))
 
 (defun js-primary-expr (form)
   (cond
     ((numberp form)
      (if (<= 0 form)
          (sp-literal form)
-         (unary-minus (abs form))))
+         (sp-unary-minus (abs form))))
     ((stringp form)
      (sp-string form))
     ((symbolp form)
@@ -168,7 +178,7 @@
        (false     (sp-literal "false"))
        (null      (sp-literal "null"))
        (this      (sp-this-expression))
-       ;; undefined is included in the identifier case
+       (undefined (js-identifier "undefined"))
        (otherwise
         (js-identifier form))))
     (t
