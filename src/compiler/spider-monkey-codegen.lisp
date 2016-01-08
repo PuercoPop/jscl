@@ -151,6 +151,31 @@
                 (string identifier-name))))
     (js-format "{ \"type\": \"Identifier\", \"name\": \"~A\"}" name)))
 
+(defun sp-expression-statement (expression)
+  (js-format "{ \"type\": \"ExpressionStatement\", \"expression\": ~A}"
+             expression))
+
+(defun sp-object-expression (plist)
+  (js-format "{ \"type\": \"ObjectExpression\", \"properties\": [ ")
+  (do* ((tail plist (cddr tail)))
+       ((null tail))
+    (let ((key (car tail))
+          (value (cadr tail)))
+      (js-format "{ \"type\": \"Property\", \"key\": ")
+      (multiple-value-bind (identifier identifier-p) (valid-js-identifier key)
+        (declare (ignore identifier))
+        (if identifier-p
+            (sp-identifier key)
+            ;; TODO
+            (js-expr (string key) no-comma)))
+      (js-format ", \"value\": ")
+      ;; TODO
+      (js-expr value no-comma)
+
+      (js-format "}")
+      (unless (null (cddr tail))
+        (js-format ","))))
+  (js-format "] }"))
 
 ;;; Expression generators
 ;;;
@@ -197,25 +222,10 @@
     (js-format "]}")))
 
 (defun js-object-initializer (plist &optional wrap-p)
-  (when wrap-p
-    (js-format "("))
-  (js-format "{")
-  (do* ((tail plist (cddr tail)))
-       ((null tail))
-    (let ((key (car tail))
-          (value (cadr tail)))
-      (multiple-value-bind (identifier identifier-p) (valid-js-identifier key)
-        (declare (ignore identifier))
-        (if identifier-p
-            (js-identifier key)
-            (js-expr (string key) no-comma)))
-      (js-format ": ")
-      (js-expr value no-comma)
-      (unless (null (cddr tail))
-        (js-format ","))))
-  (js-format "}")
-  (when wrap-p
-    (js-format ")")))
+  (if wrap-p
+      (sp-expression-statement (with-js-output-to-string
+                                 (sp-object-expression plist)))
+      (sp-object-expression plist)))
 
 (defun js-function (arguments &rest body)
   (js-format "function(")
